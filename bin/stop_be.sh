@@ -30,6 +30,17 @@ export_env_from_conf $STARROCKS_HOME/conf/be.conf
 
 pidfile=$PID_DIR/be.pid
 
+sig=9
+
+for arg in "$@"
+do
+    case $arg in
+        --graceful|-g)
+            sig=15
+        ;;
+    esac
+done
+
 if [ -f $pidfile ]; then
     pid=`cat $pidfile`
     pidcomm=`ps -p $pid -o comm=`
@@ -39,8 +50,8 @@ if [ -f $pidfile ]; then
     fi
 
     if kill -0 $pid; then
-        if kill -9 $pid > /dev/null 2>&1; then
-            echo "stop $pidcomm, and remove pid file. "
+        if kill -${sig} $pid > /dev/null 2>&1; then
+            echo "stop $pidcomm using signal $sig, and remove pid file. "
             rm $pidfile
             exit 0
         else

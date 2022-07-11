@@ -28,6 +28,7 @@ import com.starrocks.server.GlobalStateMgr;
 import com.starrocks.system.Backend;
 import com.starrocks.system.BackendHbResponse;
 import com.starrocks.thrift.TDisk;
+import com.starrocks.thrift.THbBackendState;
 import com.starrocks.thrift.TStorageMedium;
 import org.junit.Assert;
 import org.junit.Before;
@@ -233,7 +234,7 @@ public class BackendTest {
     public void testHeartbeatOk() throws Exception {
         Backend be = new Backend();
         BackendHbResponse hbResponse = new BackendHbResponse(1, 9060, 8040, 8060, 8090,
-                System.currentTimeMillis(), "1.0", 64);
+                System.currentTimeMillis(), "1.0", 64, THbBackendState.ALIVE.ordinal());
         boolean isChanged = be.handleHbResponse(hbResponse);
         Assert.assertTrue(isChanged);
     }

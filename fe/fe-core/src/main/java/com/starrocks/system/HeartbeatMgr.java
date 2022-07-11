@@ -43,6 +43,7 @@ import com.starrocks.thrift.TBrokerOperationStatusCode;
 import com.starrocks.thrift.TBrokerPingBrokerRequest;
 import com.starrocks.thrift.TBrokerVersion;
 import com.starrocks.thrift.TFileBrokerService;
+import com.starrocks.thrift.THbBackendState;
 import com.starrocks.thrift.THeartbeatResult;
 import com.starrocks.thrift.TMasterInfo;
 import com.starrocks.thrift.TNetworkAddress;
@@ -249,6 +250,7 @@ public class HeartbeatMgr extends MasterDaemon {
                 long flags = heartbeatFlags.getHeartbeatFlags();
                 copiedMasterInfo.setHeartbeat_flags(flags);
                 copiedMasterInfo.setBackend_id(computeNodeId);
+                copiedMasterInfo.setBackend_state(getHbBackendState());
                 THeartbeatResult result = client.heartbeat(copiedMasterInfo);
 
                 ok = true;
@@ -274,10 +276,11 @@ public class HeartbeatMgr extends MasterDaemon {
                     if (tBackendInfo.isSetNum_hardware_cores()) {
                         BackendCoreStat.setNumOfHardwareCoresOfBe(computeNodeId, cpuCores);
                     }
+                    int state = tBackendInfo.getState();
 
                     // backend.updateOnce(bePort, httpPort, beRpcPort, brpcPort);
                     return new BackendHbResponse(computeNodeId, bePort, httpPort, brpcPort, starletPort,
-                            System.currentTimeMillis(), version, cpuCores);
+                            System.currentTimeMillis(), version, cpuCores, state);
                 } else {
                     return new BackendHbResponse(computeNodeId,
                             result.getStatus().getError_msgs().isEmpty() ? "Unknown error"
@@ -294,6 +297,19 @@ public class HeartbeatMgr extends MasterDaemon {
                     ClientPool.heartbeatPool.invalidateObject(beAddr, client);
                 }
             }
+        }
+
+        private int getHbBackendState() {
+            if (computeNode.isPrepareExit()) {
+                return THbBackendState.PREPARE_EXIT.ordinal();
+            }
+
+            if (computeNode.isAlive()) {
+                return THbBackendState.ALIVE.ordinal();
+            }
+
+            return THbBackendState.OFFLINE.ordinal();
+
         }
     }
 

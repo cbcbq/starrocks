@@ -47,13 +47,15 @@ public class BackendHbResponse extends HeartbeatResponse implements Writable {
     private String version = "";
     @SerializedName(value = "cpuCores")
     private int cpuCores;
+    @SerializedName(value = "state")
+    private int state;
 
     public BackendHbResponse() {
         super(HeartbeatResponse.Type.BACKEND);
     }
 
     public BackendHbResponse(long beId, int bePort, int httpPort, int brpcPort,
-                             int starletPort, long hbTime, String version, int cpuCores) {
+                             int starletPort, long hbTime, String version, int cpuCores, int state) {
         super(HeartbeatResponse.Type.BACKEND);
         this.beId = beId;
         this.status = HbStatus.OK;
@@ -64,6 +66,7 @@ public class BackendHbResponse extends HeartbeatResponse implements Writable {
         this.hbTime = hbTime;
         this.version = version;
         this.cpuCores = cpuCores;
+        this.state = state;
     }
 
     public BackendHbResponse(long beId, String errMsg) {
@@ -99,6 +102,10 @@ public class BackendHbResponse extends HeartbeatResponse implements Writable {
 
     public int getCpuCores() {
         return cpuCores;
+    }
+
+    public int getBEState() {
+        return state;
     }
 
     public static BackendHbResponse read(DataInput in) throws IOException {

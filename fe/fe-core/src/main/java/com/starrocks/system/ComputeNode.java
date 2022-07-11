@@ -8,6 +8,7 @@ import com.starrocks.common.Config;
 import com.starrocks.common.io.Text;
 import com.starrocks.common.io.Writable;
 import com.starrocks.persist.gson.GsonUtils;
+import com.starrocks.thrift.THbBackendState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -49,6 +50,8 @@ public class ComputeNode implements IComputable, Writable {
     private volatile long lastStartTime;
     @SerializedName("isAlive")
     private AtomicBoolean isAlive;
+    @SerializedName("isPrepareExit")
+    private AtomicBoolean isPrepareExit;
 
     @SerializedName("isDecommissioned")
     private final AtomicBoolean isDecommissioned;
@@ -79,6 +82,7 @@ public class ComputeNode implements IComputable, Writable {
         this.lastUpdateMs = 0;
         this.lastStartTime = 0;
         this.isAlive = new AtomicBoolean();
+        this.isPrepareExit = new AtomicBoolean();
         this.isDecommissioned = new AtomicBoolean(false);
 
         this.bePort = 0;
@@ -103,6 +107,7 @@ public class ComputeNode implements IComputable, Writable {
         this.lastStartTime = -1L;
 
         this.isAlive = new AtomicBoolean(false);
+        this.isPrepareExit = new AtomicBoolean(false);
         this.isDecommissioned = new AtomicBoolean(false);
 
         this.ownerClusterName = "";
@@ -208,6 +213,10 @@ public class ComputeNode implements IComputable, Writable {
         this.isAlive.set(isAlive);
     }
 
+    public void setPrepareExit(boolean isPrepareExit) {
+        this.isPrepareExit.set(isPrepareExit);
+    }
+
     public void setBePort(int agentPort) {
         this.bePort = agentPort;
     }
@@ -245,7 +254,11 @@ public class ComputeNode implements IComputable, Writable {
     }
 
     public boolean isAlive() {
-        return this.isAlive.get();
+        return this.isAlive.get() && !this.isPrepareExit.get();
+    }
+
+    public boolean isPrepareExit() {
+        return this.isPrepareExit.get();
     }
 
     public boolean isDecommissioned() {
@@ -253,7 +266,7 @@ public class ComputeNode implements IComputable, Writable {
     }
 
     public boolean isAvailable() {
-        return this.isAlive.get() && !this.isDecommissioned.get();
+        return this.isAlive.get() && !this.isPrepareExit.get() && !this.isDecommissioned.get();
     }
 
     @Override
@@ -279,13 +292,14 @@ public class ComputeNode implements IComputable, Writable {
         ComputeNode computeNode = (ComputeNode) obj;
 
         return (id == computeNode.id) && (host.equals(computeNode.host)) && (heartbeatPort == computeNode.heartbeatPort)
-                && (bePort == computeNode.bePort) && (isAlive.get() == computeNode.isAlive.get());
+                && (bePort == computeNode.bePort) && (isAlive.get() == computeNode.isAlive.get()
+                && (isPrepareExit.get() == computeNode.isPrepareExit.get()));
     }
 
     @Override
     public String toString() {
         return "ComputeNode [id=" + id + ", host=" + host + ", heartbeatPort=" + heartbeatPort + ", alive=" +
-                isAlive.get() + "]";
+                (isAlive.get() && isPrepareExit.get()) + "]";
     }
 
     public String getOwnerClusterName() {
@@ -323,8 +337,16 @@ public class ComputeNode implements IComputable, Writable {
         return isAlive;
     }
 
+    public AtomicBoolean getIsPrepareExit() {
+        return isPrepareExit;
+    }
+
     public void setIsAlive(AtomicBoolean isAlive) {
         this.isAlive = isAlive;
+    }
+
+    public void setIsPrepareExit(AtomicBoolean isPrepareExit) {
+        this.isPrepareExit = isPrepareExit;
     }
 
     public AtomicBoolean getIsDecommissioned() {
@@ -394,6 +416,11 @@ public class ComputeNode implements IComputable, Writable {
                 BackendCoreStat.setNumOfHardwareCoresOfBe(hbResponse.getBeId(), hbResponse.getCpuCores());
             }
 
+            boolean isPrepareExit = (hbResponse.getBEState() == THbBackendState.PREPARE_EXIT.ordinal());
+            if (this.isPrepareExit.compareAndSet(!isPrepareExit, isPrepareExit)) {
+                isChanged = true;
+            }
+
             heartbeatErrMsg = "";
             this.heartbeatRetryTimes = 0;
         } else {
@@ -403,6 +430,9 @@ public class ComputeNode implements IComputable, Writable {
                 if (isAlive.compareAndSet(true, false)) {
                     isChanged = true;
                     LOG.info("{} is dead,", this.toString());
+                }
+                if (isPrepareExit.compareAndSet(true, false)) {
+                    isChanged = true;
                 }
 
                 heartbeatErrMsg = hbResponse.getMsg() == null ? "Unknown error" : hbResponse.getMsg();

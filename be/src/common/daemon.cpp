@@ -54,7 +54,7 @@
 namespace starrocks {
 DEFINE_bool(cn, false, "start as compute node");
 
-bool k_starrocks_exit = false;
+bool k_starrocks_be_exit_notify_master = false;
 
 class ReleaseColumnPool {
 public:
@@ -208,7 +208,8 @@ static void init_starrocks_metrics(const std::vector<StorePath>& store_paths) {
 }
 
 void sigterm_handler(int signo) {
-    k_starrocks_exit = true;
+    k_starrocks_be_exit_notify_master = true;
+    LOG(INFO) << "service begin exiting due to signal " << signo;
 }
 
 int install_signal(int signo, void (*handler)(int)) {

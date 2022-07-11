@@ -759,6 +759,11 @@ CONF_String(starlet_cache_dir, "");
 
 CONF_Int64(lake_metadata_cache_limit, /*2GB=*/"2147483648");
 
+// max loop count when be waiting its fragments finish
+CONF_Int64(be_loop_count_wait_fragments_finish, "0");
+
+// max loop count when cn waiting its fragments finish
+CONF_Int64(cn_loop_count_wait_fragments_finish, "0");
 } // namespace config
 
 } // namespace starrocks

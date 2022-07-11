@@ -446,3 +446,10 @@ enum TCompressionType {
     BZIP2 = 10;
     LZO = 11; // Deprecated
 }
+
+enum THbBackendState {
+    INVALID_STATE = 0,
+    ALIVE = 1,
+    PREPARE_EXIT = 2,
+    OFFLINE = 3,
+}

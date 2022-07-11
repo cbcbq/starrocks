@@ -44,6 +44,8 @@ using std::vector;
 using apache::thrift::transport::TProcessor;
 
 namespace starrocks {
+bool k_starrocks_exit = false;
+extern bool k_starrocks_be_exit_notify_master;
 
 HeartbeatServer::HeartbeatServer() : _olap_engine(StorageEngine::instance()) {}
 
@@ -102,6 +104,8 @@ void HeartbeatServer::heartbeat(THeartbeatResult& heartbeat_result, const TMaste
 #endif
         heartbeat_result.backend_info.__set_version(get_short_version());
         heartbeat_result.backend_info.__set_num_hardware_cores(num_hardware_cores);
+        heartbeat_result.backend_info.__set_state(k_starrocks_be_exit_notify_master ?
+                                                  THbBackendState::PREPARE_EXIT : THbBackendState::ALIVE);
     }
 }
 
@@ -176,6 +180,10 @@ StatusOr<HeartbeatServer::CmpResult> HeartbeatServer::compare_master_info(const 
     if (master_info.__isset.heartbeat_flags) {
         HeartbeatFlags* heartbeat_flags = ExecEnv::GetInstance()->heartbeat_flags();
         heartbeat_flags->update(master_info.heartbeat_flags);
+    }
+
+    if (master_info.backend_state == THbBackendState::PREPARE_EXIT && k_starrocks_be_exit_notify_master) {
+        k_starrocks_exit = true;
     }
 
     if (curr_master_info->network_address != master_info.network_address) {

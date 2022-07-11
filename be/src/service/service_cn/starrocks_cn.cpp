@@ -73,6 +73,8 @@ void start_cn() {
         sleep(10);
     }
 
+    starrocks::WaitingForFragmentsFinish(exec_env, starrocks::config::cn_loop_count_wait_fragments_finish);
+
     http_service.reset();
 
     brpc_server.Stop(0);
