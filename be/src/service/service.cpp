@@ -1,4 +1,5 @@
 #include "service/service.h"
+
 #include "runtime/exec_env.h"
 #include "runtime/fragment_mgr.h"
 
@@ -18,4 +19,4 @@ void WaitingForFragmentsFinish(ExecEnv* exec_env, size_t max_loop_cnt_cfg) {
         loop_cnt++;
     }
 }
-}
+} // namespace starrocks

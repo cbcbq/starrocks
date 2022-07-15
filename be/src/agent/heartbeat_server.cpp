@@ -104,8 +104,8 @@ void HeartbeatServer::heartbeat(THeartbeatResult& heartbeat_result, const TMaste
 #endif
         heartbeat_result.backend_info.__set_version(get_short_version());
         heartbeat_result.backend_info.__set_num_hardware_cores(num_hardware_cores);
-        heartbeat_result.backend_info.__set_state(k_starrocks_be_exit_notify_master ?
-                                                  THbBackendState::PREPARE_EXIT : THbBackendState::ALIVE);
+        heartbeat_result.backend_info.__set_state(k_starrocks_be_exit_notify_master ? THbBackendState::PREPARE_EXIT
+                                                                                    : THbBackendState::ALIVE);
     }
 }
 
