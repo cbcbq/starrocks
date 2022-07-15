@@ -23,6 +23,7 @@ package com.starrocks.system;
 
 import com.google.gson.annotations.SerializedName;
 import com.starrocks.common.io.Writable;
+import com.starrocks.thrift.TNodeState;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -48,14 +49,14 @@ public class BackendHbResponse extends HeartbeatResponse implements Writable {
     @SerializedName(value = "cpuCores")
     private int cpuCores;
     @SerializedName(value = "state")
-    private int state;
+    private TNodeState state;
 
     public BackendHbResponse() {
         super(HeartbeatResponse.Type.BACKEND);
     }
 
     public BackendHbResponse(long beId, int bePort, int httpPort, int brpcPort,
-                             int starletPort, long hbTime, String version, int cpuCores, int state) {
+                             int starletPort, long hbTime, String version, int cpuCores, TNodeState state) {
         super(HeartbeatResponse.Type.BACKEND);
         this.beId = beId;
         this.status = HbStatus.OK;
@@ -104,7 +105,7 @@ public class BackendHbResponse extends HeartbeatResponse implements Writable {
         return cpuCores;
     }
 
-    public int getBEState() {
+    public TNodeState getBENodeState() {
         return state;
     }
 

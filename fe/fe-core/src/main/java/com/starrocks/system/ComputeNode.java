@@ -8,7 +8,7 @@ import com.starrocks.common.Config;
 import com.starrocks.common.io.Text;
 import com.starrocks.common.io.Writable;
 import com.starrocks.persist.gson.GsonUtils;
-import com.starrocks.thrift.THbBackendState;
+import com.starrocks.thrift.TNodeState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -416,7 +416,7 @@ public class ComputeNode implements IComputable, Writable {
                 BackendCoreStat.setNumOfHardwareCoresOfBe(hbResponse.getBeId(), hbResponse.getCpuCores());
             }
 
-            boolean isPrepareExit = (hbResponse.getBEState() == THbBackendState.PREPARE_EXIT.ordinal());
+            boolean isPrepareExit = (hbResponse.getBENodeState() == TNodeState.COOLDOWN);
             if (this.isPrepareExit.compareAndSet(!isPrepareExit, isPrepareExit)) {
                 isChanged = true;
             }

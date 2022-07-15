@@ -447,9 +447,9 @@ enum TCompressionType {
     LZO = 11; // Deprecated
 }
 
-enum THbBackendState {
+enum TNodeState {
     INVALID_STATE = 0,
-    ALIVE = 1,
-    PREPARE_EXIT = 2,
-    OFFLINE = 3,
+    NORMAL = 1,
+    COOLDOWN = 2,
+    DOWN = 3,
 }

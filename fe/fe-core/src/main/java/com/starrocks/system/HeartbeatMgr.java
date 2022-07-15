@@ -43,10 +43,10 @@ import com.starrocks.thrift.TBrokerOperationStatusCode;
 import com.starrocks.thrift.TBrokerPingBrokerRequest;
 import com.starrocks.thrift.TBrokerVersion;
 import com.starrocks.thrift.TFileBrokerService;
-import com.starrocks.thrift.THbBackendState;
 import com.starrocks.thrift.THeartbeatResult;
 import com.starrocks.thrift.TMasterInfo;
 import com.starrocks.thrift.TNetworkAddress;
+import com.starrocks.thrift.TNodeState;
 import com.starrocks.thrift.TStatusCode;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -250,7 +250,7 @@ public class HeartbeatMgr extends MasterDaemon {
                 long flags = heartbeatFlags.getHeartbeatFlags();
                 copiedMasterInfo.setHeartbeat_flags(flags);
                 copiedMasterInfo.setBackend_id(computeNodeId);
-                copiedMasterInfo.setBackend_state(getHbBackendState());
+                copiedMasterInfo.setBackend_state(getHbBackendNodeState());
                 THeartbeatResult result = client.heartbeat(copiedMasterInfo);
 
                 ok = true;
@@ -276,7 +276,7 @@ public class HeartbeatMgr extends MasterDaemon {
                     if (tBackendInfo.isSetNum_hardware_cores()) {
                         BackendCoreStat.setNumOfHardwareCoresOfBe(computeNodeId, cpuCores);
                     }
-                    int state = tBackendInfo.getState();
+                    TNodeState state = tBackendInfo.getState();
 
                     // backend.updateOnce(bePort, httpPort, beRpcPort, brpcPort);
                     return new BackendHbResponse(computeNodeId, bePort, httpPort, brpcPort, starletPort,
@@ -299,17 +299,16 @@ public class HeartbeatMgr extends MasterDaemon {
             }
         }
 
-        private int getHbBackendState() {
+        private TNodeState getHbBackendNodeState() {
             if (computeNode.isPrepareExit()) {
-                return THbBackendState.PREPARE_EXIT.ordinal();
+                return TNodeState.COOLDOWN;
             }
 
             if (computeNode.isAlive()) {
-                return THbBackendState.ALIVE.ordinal();
+                return TNodeState.NORMAL;
             }
 
-            return THbBackendState.OFFLINE.ordinal();
-
+            return TNodeState.DOWN;
         }
     }
 
