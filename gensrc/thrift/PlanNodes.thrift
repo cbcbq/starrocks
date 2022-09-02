@@ -236,6 +236,18 @@ struct TEsScanRange {
   4: required i32 shard_id
 }
 
+enum TIcebergFileContent {
+    DATA,
+    POSITION_DELETES,
+    EQUALITY_DELETES,
+}
+
+struct TIcebergDeleteFile {
+    1: optional string full_path
+    2: optional TIcebergFileContent file_content
+    3: optional i64 length
+}
+
 // Hdfs scan range
 struct THdfsScanRange {
     // File name (not the full path).  The path is assumed to be relative to the
@@ -268,6 +280,9 @@ struct THdfsScanRange {
 
     // whether to use JNI scanner to read data of hudi MOR table for snapshot queries
     10: optional bool use_hudi_jni_reader;
+
+    // delete file infos for iceberg v2
+    11: optional list<TIcebergDeleteFile> delete_files;
 }
 
 // Specification of an individual data range which is held in its entirety
